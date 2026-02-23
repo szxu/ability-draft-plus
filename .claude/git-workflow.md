@@ -80,4 +80,11 @@ git pull
 - Keep branch names descriptive and concise
 - Delete branches after merging (handled automatically by `--delete-branch` flag)
 
+### Fork / Upstream Policy
+
+- This repository (`szxu/ability-draft-plus`) is a **fork** of `Tiarin-Hino/ability-draft-plus`.
+- **NEVER merge or push to the upstream (Tiarin-Hino) repository.** All PRs must target `szxu/ability-draft-plus` only.
+- When creating PRs with `gh pr create`, ensure the base repository is the fork (`szxu/ability-draft-plus`), not the upstream.
+- The user will handle merging PRs manually. **Do NOT auto-merge PRs** unless explicitly asked.
+
 This workflow ensures clean Git history and prevents conflicts between different features/fixes.
