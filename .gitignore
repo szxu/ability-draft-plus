@@ -143,12 +143,16 @@ package-lock.json
 
 # Scripts output and cache
 scripts/output/
-scripts/__pycache__/
-scripts/*.pyc
-scripts/*.png
-scripts/*.PNG
-scripts/*.json
-!scripts/requirements.txt
+scripts/**/output/
+scripts/**/__pycache__/
+scripts/**/*.pyc
+scripts/**/*.png
+scripts/**/*.PNG
+scripts/mapping/*.json
+!scripts/mapping/requirements.txt
+
+# Mock data output
+mock-data/
 
 # Claude Code local settings and AI-generated documentation
 .claude/settings.local.json

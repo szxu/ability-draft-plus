@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.env
+.env.*
+*.log
+failed-samples
+training_data
+scripts/output
+scripts/__pycache__
+*.pyc
+.DS_Store
+Thumbs.db
+coverage
+.nyc_output

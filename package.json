@@ -7,11 +7,15 @@
     "start": "electron .",
     "dev": "cross-env HOT_RELOAD=true electron .",
     "dev:debug": "cross-env HOT_RELOAD=true DEBUG=true electron .",
-    "prepare-config": "node scripts/prepare-app-config.js",
+    "prepare-config": "node scripts/build/prepare-app-config.js",
     "rebuild": "electron-rebuild -f",
-    "postinstall": "npm run rebuild && node scripts/fix-tfjs-node-build.js",
+    "postinstall": "npm run rebuild && node scripts/build/fix-tfjs-node-build.js",
     "dist": "npm run prepare-config && electron-builder",
-    "generate-mock-data": "node scripts/generate-mock-data.js"
+    "dist:linux": "npm run prepare-config && electron-builder --linux",
+    "dist:win": "npm run prepare-config && electron-builder --win",
+    "generate-mock-data": "node scripts/generate-mock-data.js",
+    "clean": "bash scripts/build/clean.sh",
+    "clean:all": "bash scripts/build/clean.sh --all"
   },
   "keywords": [
     "dota2",
@@ -20,7 +24,11 @@
     "electron",
     "tensorflow"
   ],
-  "author": "Tiarin Hino",
+  "author": {
+    "name": "Tiarin Hino",
+    "email": "tiarin.hino@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/tiarin-hino/ability-draft-plus",
   "license": "ISC",
   "lint-staged": {
     "*.{js,json}": "echo 'Staged files ready for commit'"
@@ -122,6 +130,30 @@
           ]
         }
       ]
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "tar.gz",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Game"
     },
     "nsis": {
       "oneClick": false,

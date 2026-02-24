@@ -1,0 +1,40 @@
+# ============================================================
+# docker-compose.yml - Orchestrate build environments
+#
+# Services:
+#   build-linux  - Build Linux distributable packages
+#   dev          - Interactive development environment
+#
+# Usage:
+#   docker compose -f scripts/docker/docker-compose.yml run build-linux
+#   docker compose -f scripts/docker/docker-compose.yml run dev bash
+# ============================================================
+
+services:
+  # Production build for Linux
+  build-linux:
+    build:
+      context: ../..
+      dockerfile: scripts/docker/Dockerfile
+    volumes:
+      - ../../dist:/output
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=4096
+
+  # Development environment
+  dev:
+    build:
+      context: ../..
+      dockerfile: scripts/docker/Dockerfile.dev
+    volumes:
+      - ../..:/app
+      - node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - HOT_RELOAD=false
+      - DEBUG=true
+    working_dir: /app
+    command: bash
+
+volumes:
+  node_modules:
