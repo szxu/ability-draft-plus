@@ -154,6 +154,11 @@ scripts/mapping/*.json
 # Mock data output
 mock-data/
 
+# SQLite temporary files
+*.db-shm
+*.db-wal
+*.db-journal
+
 # Claude Code local settings and AI-generated documentation
 .claude/settings.local.json
 .claude/*.md
