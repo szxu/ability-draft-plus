@@ -26,7 +26,7 @@ function warn(msg) {
 /**
  * Ensure the native binding file is accessible at the path tfjs-node expects.
  * After electron-rebuild the binding may land in a build/Release subdir
- * but the JS loader may look for it at lib/napi-v*/tfjs_binding.node.
+ * but the JS loader may look for it at lib/napi-vN/tfjs_binding.node.
  */
 function fixBindingPath() {
   const libDir = path.join(TFJS_NODE_DIR, 'lib');

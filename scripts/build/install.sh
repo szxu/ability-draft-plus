@@ -3,6 +3,8 @@
 # install.sh - Install dependencies for Ability Draft Plus
 #
 # Handles npm install, native module rebuild, and tfjs fixes.
+# Uses --ignore-scripts to avoid postinstall failures with native
+# modules, then rebuilds them individually.
 #
 # Usage:
 #   ./scripts/build/install.sh          # Full install
@@ -54,24 +56,57 @@ if [ "$CLEAN_INSTALL" = true ]; then
   log_info "Cleaned."
 fi
 
-# Install npm dependencies
-log_info "Installing npm dependencies..."
-npm install --no-optional 2>&1 || {
-  log_warn "npm install with --no-optional failed, trying standard install..."
-  npm install 2>&1
-}
+# Step 1: Install npm dependencies (skip postinstall to avoid native module failures)
+log_info "Installing npm dependencies (--ignore-scripts)..."
+npm install --ignore-scripts 2>&1
+log_info "Base dependencies installed."
 
-# Rebuild native modules for Electron
-log_info "Rebuilding native modules for Electron..."
-npx electron-rebuild -f 2>&1 || {
-  log_warn "electron-rebuild failed. Native modules may not work correctly."
-  log_warn "Ensure build tools are installed (python3, make, g++)."
-}
+# Step 2: Rebuild native modules individually
+# better-sqlite3: build against current Node.js
+log_info "Rebuilding better-sqlite3..."
+if [ -d "$PROJECT_ROOT/node_modules/better-sqlite3" ]; then
+  (cd "$PROJECT_ROOT/node_modules/better-sqlite3" && \
+   npx --yes node-gyp rebuild --release 2>&1) && \
+    log_info "  better-sqlite3 rebuilt successfully." || \
+    log_warn "  better-sqlite3 rebuild failed. Database features may not work."
+fi
 
-# Apply TensorFlow.js fix
+# sharp: install prebuilt binary for current platform
+log_info "Rebuilding sharp..."
+if [ -d "$PROJECT_ROOT/node_modules/sharp" ]; then
+  PLATFORM=$(uname -s | tr '[:upper:]' '[:lower:]')
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64) ARCH="x64" ;;
+    aarch64|arm64) ARCH="arm64" ;;
+  esac
+  npm install "--platform=$PLATFORM" "--arch=$ARCH" sharp --ignore-scripts 2>&1 && \
+    log_info "  sharp installed with prebuilt binary ($PLATFORM-$ARCH)." || \
+    log_warn "  sharp install failed. Image processing may not work."
+fi
+
+# @tensorflow/tfjs-node: requires Node 18 and Electron headers
+log_info "Checking @tensorflow/tfjs-node..."
+if [ -d "$PROJECT_ROOT/node_modules/@tensorflow/tfjs-node" ]; then
+  NODE_MAJOR=$(node -v | sed 's/v\([0-9]*\).*/\1/')
+  if [ "$NODE_MAJOR" -le 20 ]; then
+    log_info "  Node $NODE_MAJOR detected, attempting tfjs-node rebuild..."
+    npm rebuild @tensorflow/tfjs-node --build-addon-from-source 2>&1 && \
+      log_info "  tfjs-node rebuilt successfully." || \
+      log_warn "  tfjs-node rebuild failed. Use Docker with Node 18 for ML features."
+  else
+    log_warn "  Node $NODE_MAJOR detected. @tensorflow/tfjs-node requires Node <=20."
+    log_warn "  Use Docker (scripts/docker/) with Node 18 for full ML support."
+    # Create placeholder so packaging doesn't fail
+    mkdir -p "$PROJECT_ROOT/node_modules/@tensorflow/tfjs-node/lib/napi-v8"
+    touch "$PROJECT_ROOT/node_modules/@tensorflow/tfjs-node/lib/napi-v8/tfjs_binding.node"
+  fi
+fi
+
+# Step 3: Apply TensorFlow.js fix
 log_info "Applying TensorFlow.js build fix..."
 node "$SCRIPT_DIR/fix-tfjs-node-build.js" 2>&1 || {
-  log_warn "TensorFlow.js fix failed. ML features may not work."
+  log_warn "TensorFlow.js fix had warnings (non-fatal)."
 }
 
 log_info "============================================================"
@@ -79,6 +114,7 @@ log_info "Installation complete!"
 log_info "============================================================"
 log_info ""
 log_info "Next steps:"
-log_info "  npm start         # Run the app"
-log_info "  npm run dev       # Run with hot reload"
-log_info "  npm run dev:debug # Run with debug + hot reload"
+log_info "  npm start                                    # Run the app"
+log_info "  npm run dev                                  # Run with hot reload"
+log_info "  ./scripts/build/build.sh --linux             # Build Linux packages"
+log_info "  ./scripts/docker/build-in-docker.sh          # Build via Docker"
